@@ -1,0 +1,9 @@
+[toolchain]
+# Pinned rather than "stable" so that a clippy or rustfmt release cannot turn a
+# green CI run red without a commit. Bump deliberately.
+#
+# 1.85 is the floor: edition 2024 requires it. Keep in sync with
+# `rust-version` in Cargo.toml.
+channel = "1.85"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
