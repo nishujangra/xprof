@@ -1,0 +1,25 @@
+[package]
+name = "xprof"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Native XDP profiler for Linux"
+license = "GPL-2.0-or-later"
+readme = "README.md"
+repository = "https://github.com/nishujangra/xprof"
+keywords = ["xdp", "ebpf", "bpf", "profiler", "linux"]
+categories = ["command-line-utilities", "development-tools::profiling"]
+publish = false
+
+[[bin]]
+name = "xprof"
+path = "src/main.rs"
+
+[dependencies]
+
+[dev-dependencies]
+
+[profile.release]
+# Profiling xprof itself is a stated project requirement, and symbolizing our
+# own stacks needs debug info in release builds.
+debug = true
