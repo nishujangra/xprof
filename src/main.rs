@@ -2,7 +2,10 @@
 
 //! xprof — native XDP profiler for Linux.
 
+mod cli;
 mod error;
+
+use clap::Parser;
 
 use error::Result;
 
@@ -14,8 +17,5 @@ fn main() {
 }
 
 fn run() -> Result<()> {
-    Err(error::Error::NotNativeXdp {
-        iface: "eth0".into(),
-        mode: "generic".into(),
-    })
+    cli::dispatch(cli::Cli::parse())
 }
