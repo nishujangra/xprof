@@ -2,8 +2,9 @@
 
 //! Command-line surface: parsing and dispatch.
 //!
-//! Every subcommand here parses and then returns [`Error::NotImplemented`], so
-//! each later implementations are a fill-in-one-function change rather than a wiring change.
+//! Parsing is kept separate from execution: `dispatch` resolves the parsed
+//! command to a single call, so implementing a subcommand means filling in one
+//! function rather than rewiring argument handling.
 
 mod commands;
 pub mod output;

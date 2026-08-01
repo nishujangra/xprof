@@ -41,7 +41,7 @@ pub enum Error {
     )]
     NotNativeXdp { iface: String, mode: String },
 
-    /// A subcommand parses but its implementation lands in a later code.
+    /// The subcommand parses, but its implementation is not written yet.
     #[error("`{0}` is not implemented yet")]
     NotImplemented(&'static str),
 
