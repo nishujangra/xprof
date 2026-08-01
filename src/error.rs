@@ -32,7 +32,7 @@ pub enum Error {
 
     /// The program is attached, but in generic (SKB) or offload mode.
     ///
-    /// `mode` is a `String` for now; PR 5 introduces `discovery::XdpMode` and
+    /// `mode` is a `String` for now; in future `discovery::XdpMode` and
     /// tightens this field to it.
     #[error(
         "xprof currently supports native XDP only.\n\n\
@@ -40,6 +40,10 @@ pub enum Error {
          Native XDP is required."
     )]
     NotNativeXdp { iface: String, mode: String },
+
+    /// A subcommand parses but its implementation lands in a later code.
+    #[error("`{0}` is not implemented yet")]
+    NotImplemented(&'static str),
 
     /// Something is attached, but it is not a `BPF_PROG_TYPE_XDP` program.
     #[error("program {prog_id} is not an XDP program (found {found})")]
