@@ -17,6 +17,7 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.6.5", features = ["derive"] }
+libc = "0.2.189"
 netlink-packet-core = { version = "0.8.1", default-features = false }
 netlink-packet-route = { version = "0.31.0", default-features = false }
 netlink-sys = { version = "0.8.8", default-features = false }
