@@ -3,6 +3,7 @@
 //! xprof — native XDP profiler for Linux.
 
 mod cli;
+mod discovery;
 mod error;
 
 use clap::Parser;
