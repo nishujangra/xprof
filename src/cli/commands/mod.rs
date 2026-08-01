@@ -2,4 +2,5 @@
 
 //! One module per subcommand.
 //!
-//! Empty for now — `list.rs` and `info.rs` land in future implementation
+//! Empty for now. `cli/mod.rs` must reference this module path to compile, so
+//! it exists ahead of the command files themselves.
