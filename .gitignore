@@ -1,6 +1,5 @@
 # Rust build artifacts
 /target
-Cargo.lock
 
 # Compiled eBPF objects and generated skeletons (rebuilt by build.rs)
 *.o
