@@ -16,4 +16,5 @@
 #![allow(dead_code)]
 
 pub mod link;
+pub mod mode;
 mod netlink;
