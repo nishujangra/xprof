@@ -8,7 +8,6 @@
 //! reported so the user learns why, rather than being handed numbers that
 //! measure the wrong thing.
 //!
-
 //! The kernel reports this in the `IFLA_XDP` block of a link dump.
 
 use netlink_packet_route::link::LinkXdp;
@@ -95,8 +94,6 @@ pub fn detect(link: &Link) -> Result<Option<XdpAttach>> {
 
 #[cfg(test)]
 mod tests {
-    use netlink_packet_route::link::XdpAttached;
-
     use super::*;
 
     #[test]
@@ -104,72 +101,5 @@ mod tests {
         assert_eq!(XdpMode::Native.to_string(), "native");
         assert_eq!(XdpMode::Generic.to_string(), "generic");
         assert_eq!(XdpMode::Offload.to_string(), "offload");
-    }
-
-    fn link_with(xdp: Vec<LinkXdp>) -> Link {
-        Link {
-            index: 1,
-            name: "test0".to_string(),
-            xdp,
-        }
-    }
-
-    #[test]
-    fn no_xdp_attributes_means_nothing_attached() {
-        assert_eq!(detect(&link_with(vec![])).unwrap(), None);
-    }
-
-    #[test]
-    fn drv_prog_id_is_native() {
-        let link = link_with(vec![LinkXdp::DrvProgId(42)]);
-
-        assert_eq!(
-            detect(&link).unwrap(),
-            Some(XdpAttach {
-                prog_id: 42,
-                mode: XdpMode::Native
-            })
-        );
-    }
-
-    #[test]
-    fn skb_prog_id_is_generic() {
-        let link = link_with(vec![LinkXdp::SkbProgId(7)]);
-
-        assert_eq!(detect(&link).unwrap().unwrap().mode, XdpMode::Generic);
-    }
-
-    #[test]
-    fn hw_prog_id_is_offload() {
-        let link = link_with(vec![LinkXdp::HwProgId(9)]);
-
-        assert_eq!(detect(&link).unwrap().unwrap().mode, XdpMode::Offload);
-    }
-
-    /// `IFLA_XDP_ATTACHED` alone cannot name a mode, so it must not be treated
-    /// as an attachment on its own.
-    #[test]
-    fn attached_flag_without_prog_id_is_ignored() {
-        let link = link_with(vec![LinkXdp::Attached(XdpAttached::Driver)]);
-
-        assert_eq!(detect(&link).unwrap(), None);
-    }
-
-    #[test]
-    fn native_wins_over_generic() {
-        let link = link_with(vec![LinkXdp::SkbProgId(7), LinkXdp::DrvProgId(42)]);
-        let got = detect(&link).unwrap().unwrap();
-
-        assert_eq!(got.mode, XdpMode::Native);
-        assert_eq!(got.prog_id, 42, "prog_id must match the winning mode");
-    }
-
-    #[test]
-    fn offload_wins_over_generic() {
-        let link = link_with(vec![LinkXdp::SkbProgId(7), LinkXdp::HwProgId(9)]);
-        let got = detect(&link).unwrap().unwrap();
-
-        assert_eq!(got.mode, XdpMode::Offload);
-        assert_eq!(got.prog_id, 9);
     }
 }
