@@ -62,3 +62,39 @@ fn parse_link(msg: LinkMessage) -> Link {
 
     Link { index, name }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every Linux host has `lo`, so this is not environment-dependent.
+    #[test]
+    fn lists_loopback() {
+        let links = list_links().expect("RTM_GETLINK dump should succeed");
+
+        let lo = links
+            .iter()
+            .find(|l| l.name == "lo")
+            .expect("host must have a loopback interface");
+
+        // lo is conventionally 1, but the real invariant is non-zero.
+        assert!(lo.index > 0, "interface index must be non-zero");
+    }
+
+    #[test]
+    fn indices_are_unique() {
+        let links = list_links().expect("RTM_GETLINK dump should succeed");
+
+        let mut indices: Vec<u32> = links.iter().map(|l| l.index).collect();
+        let total = indices.len();
+        indices.sort_unstable();
+        indices.dedup();
+
+        assert_eq!(
+            total,
+            indices.len(),
+            "ifindex must uniquely identify a link"
+        );
+    }
+}
