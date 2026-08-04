@@ -8,7 +8,17 @@
 //! reported so the user learns why, rather than being handed numbers that
 //! measure the wrong thing.
 //!
-//! The kernel reports this in the `IFLA_XDP` block of a link dump.
+//! The kernel reports this in the `IFLA_XDP` block of a link dump. Each mode
+//! has its own program id attribute, and more than one can be set at a time —
+//! an interface can carry a native and a generic program together.
+//!
+//! When that happens, [`detect`] reports native, then offload, then generic.
+//! Native first because it is the only mode xprof can profile; generic last
+//! because it is the fallback the kernel itself treats as least specific.
+//!
+//! `IFLA_XDP_ATTACHED` is not used to pick the mode. It reports
+//! `XDP_ATTACHED_MULTI` for the multi-mode case, which names no single mode,
+//! so the per-mode ids are the only reliable source.
 
 use netlink_packet_route::link::LinkXdp;
 
@@ -67,8 +77,7 @@ pub struct XdpAttach {
 
 /// What is attached to this interface, if anything.
 ///
-/// A program can be attached in more than one mode at once. Native wins, then
-/// offload, then generic.
+/// Native, then offload, then generic, per the module doc.
 pub fn detect(link: &Link) -> Result<Option<XdpAttach>> {
     let mut native = None;
     let mut generic = None;
@@ -83,6 +92,7 @@ pub fn detect(link: &Link) -> Result<Option<XdpAttach>> {
         }
     }
 
+    // Order here is the precedence.
     let attach = native
         .map(|id| (id, XdpMode::Native))
         .or(offload.map(|id| (id, XdpMode::Offload)))
