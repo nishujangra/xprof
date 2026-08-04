@@ -9,7 +9,7 @@
 //! XDP attach; `name` is for humans and for matching `--iface`. Interpreting
 //! the `IFLA_XDP` attribute on the same message belongs to `mode.rs`.
 
-use netlink_packet_route::link::{LinkAttribute, LinkMessage};
+use netlink_packet_route::link::{LinkAttribute, LinkMessage, LinkXdp};
 
 use super::netlink;
 use crate::error::Result;
@@ -23,6 +23,10 @@ pub struct Link {
 
     /// interface name eg 'eth0'
     pub name: String,
+
+    /// Raw `IFLA_XDP` sub-attributes, carried but not interpreted. Empty when
+    /// the kernel sent none. `mode.rs` turns these into an attach state.
+    pub xdp: Vec<LinkXdp>,
 }
 
 // List every network on the host, in kernel order
@@ -37,25 +41,34 @@ pub fn list_links() -> Result<Vec<Link>> {
     Ok(netlink::dump_links()?.into_iter().map(parse_link).collect())
 }
 
-/// Pull index and name out of one `RTM_NEWLINK` message.
+/// Pull what we need out of one `RTM_NEWLINK` message.
 ///
 /// The index sits in the message's fixed header, so it is a plain field read.
-/// The name is one entry in a list of optional attributes, so it has to be
-/// searched for. The kernel always sends `IFLA_IFNAME`, but a `Vec` cannot
-/// promise that — hence a fallback rather than a panic.
+/// The name and the XDP block are entries in a list of optional attributes, so
+/// they have to be searched for. One pass takes both.
+///
+/// The kernel always sends `IFLA_IFNAME`, but a `Vec` cannot promise that —
+/// hence a fallback rather than a panic. `IFLA_XDP` really is optional: an
+/// interface with nothing attached has none, and so does an older kernel.
 fn parse_link(msg: LinkMessage) -> Link {
     let index = msg.header.index;
 
-    let name = msg
-        .attributes
-        .into_iter()
-        .find_map(|attr| match attr {
-            LinkAttribute::IfName(name) => Some(name),
-            _ => None,
-        })
-        .unwrap_or_else(|| format!("if{index}"));
+    let mut name = None;
+    let mut xdp = Vec::new();
 
-    Link { index, name }
+    for attr in msg.attributes {
+        match attr {
+            LinkAttribute::IfName(n) => name = Some(n),
+            LinkAttribute::Xdp(nested) => xdp = nested,
+            _ => {}
+        }
+    }
+
+    Link {
+        index,
+        name: name.unwrap_or_else(|| format!("if{index}")),
+        xdp,
+    }
 }
 
 #[cfg(test)]
