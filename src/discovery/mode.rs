@@ -70,7 +70,7 @@ pub struct XdpAttach {
 ///
 /// A program can be attached in more than one mode at once. Native wins, then
 /// offload, then generic.
-pub fn attached(link: &Link) -> Result<Option<XdpAttach>> {
+pub fn detect(link: &Link) -> Result<Option<XdpAttach>> {
     let mut native = None;
     let mut generic = None;
     let mut offload = None;
@@ -116,7 +116,7 @@ mod tests {
 
     #[test]
     fn no_xdp_attributes_means_nothing_attached() {
-        assert_eq!(attached(&link_with(vec![])).unwrap(), None);
+        assert_eq!(detect(&link_with(vec![])).unwrap(), None);
     }
 
     #[test]
@@ -124,7 +124,7 @@ mod tests {
         let link = link_with(vec![LinkXdp::DrvProgId(42)]);
 
         assert_eq!(
-            attached(&link).unwrap(),
+            detect(&link).unwrap(),
             Some(XdpAttach {
                 prog_id: 42,
                 mode: XdpMode::Native
@@ -136,14 +136,14 @@ mod tests {
     fn skb_prog_id_is_generic() {
         let link = link_with(vec![LinkXdp::SkbProgId(7)]);
 
-        assert_eq!(attached(&link).unwrap().unwrap().mode, XdpMode::Generic);
+        assert_eq!(detect(&link).unwrap().unwrap().mode, XdpMode::Generic);
     }
 
     #[test]
     fn hw_prog_id_is_offload() {
         let link = link_with(vec![LinkXdp::HwProgId(9)]);
 
-        assert_eq!(attached(&link).unwrap().unwrap().mode, XdpMode::Offload);
+        assert_eq!(detect(&link).unwrap().unwrap().mode, XdpMode::Offload);
     }
 
     /// `IFLA_XDP_ATTACHED` alone cannot name a mode, so it must not be treated
@@ -152,13 +152,13 @@ mod tests {
     fn attached_flag_without_prog_id_is_ignored() {
         let link = link_with(vec![LinkXdp::Attached(XdpAttached::Driver)]);
 
-        assert_eq!(attached(&link).unwrap(), None);
+        assert_eq!(detect(&link).unwrap(), None);
     }
 
     #[test]
     fn native_wins_over_generic() {
         let link = link_with(vec![LinkXdp::SkbProgId(7), LinkXdp::DrvProgId(42)]);
-        let got = attached(&link).unwrap().unwrap();
+        let got = detect(&link).unwrap().unwrap();
 
         assert_eq!(got.mode, XdpMode::Native);
         assert_eq!(got.prog_id, 42, "prog_id must match the winning mode");
@@ -167,7 +167,7 @@ mod tests {
     #[test]
     fn offload_wins_over_generic() {
         let link = link_with(vec![LinkXdp::SkbProgId(7), LinkXdp::HwProgId(9)]);
-        let got = attached(&link).unwrap().unwrap();
+        let got = detect(&link).unwrap().unwrap();
 
         assert_eq!(got.mode, XdpMode::Offload);
         assert_eq!(got.prog_id, 9);
