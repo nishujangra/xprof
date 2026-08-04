@@ -1,6 +1,5 @@
 // Copyright (C) 2026 Nishant <ndjangra1027@gmail.com>
 
-
 //! Which network interfaces exist.
 //!
 //! "Link" is netlink's word for a network interface — `eth0`, `lo`, `wlan0`.
@@ -20,17 +19,14 @@ use crate::error::Result;
 pub struct Link {
     /// Kernel interface index (`ifindex`). Non-zero, and unique among live
     /// interfaces but not stable on reboots
-    pub index: u32, 
-    
+    pub index: u32,
+
     /// interface name eg 'eth0'
-    pub name: String, 
+    pub name: String,
 }
-
-
 
 // List every network on the host, in kernel order
 pub fn list_links() -> Result<Vec<Link>> {
-    
     // let mut links = Vec::new();
     // for msg in netlink::dump_links()? {
     //     links.push(parse_link(msg));
@@ -40,7 +36,6 @@ pub fn list_links() -> Result<Vec<Link>> {
     // shorter way
     Ok(netlink::dump_links()?.into_iter().map(parse_link).collect())
 }
-
 
 /// Pull index and name out of one `RTM_NEWLINK` message.
 ///
@@ -62,7 +57,6 @@ fn parse_link(msg: LinkMessage) -> Link {
 
     Link { index, name }
 }
-
 
 #[cfg(test)]
 mod tests {
