@@ -18,3 +18,5 @@
 pub mod link;
 pub mod mode;
 mod netlink;
+
+pub use mode::XdpMode;
