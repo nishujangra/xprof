@@ -1,0 +1,46 @@
+
+# Formatting, lints, and tests. Separate jobs rather than sequential steps in
+# one: a fmt violation should not hide a test failure.
+name: test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # Adds a "Run workflow" button on the Actions tab, so a run can be started
+  # against any branch without pushing a commit.
+  workflow_dispatch:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Cheapest check, no build required.
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo fmt --all --check
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      # --all-targets covers test code too; warnings fail the build, which is
+      # what makes the pinned toolchain in rust-toolchain.toml worth having.
+      - run: cargo clippy --all-targets --locked -- -D warnings
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      # The discovery tests open a real NETLINK_ROUTE socket and expect `lo`.
+      # RTM_GETLINK is a read-only dump, so no CAP_NET_ADMIN and no sudo; a
+      # standard runner has a loopback interface.
+      - run: cargo test --all-targets --locked
