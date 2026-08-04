@@ -1,0 +1,45 @@
+
+# Does it compile? Nothing else. Lints and tests live in test.yml so that a
+# clippy opinion and a broken build are never the same red X.
+name: build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # Adds a "Run workflow" button on the Actions tab, so a run can be started
+  # against any branch without pushing a commit.
+  workflow_dispatch:
+
+# A force-push supersedes the run it interrupted; no point paying for both.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    # Netlink is Linux-only, so there is no other platform to build for.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # No toolchain declared on purpose: rust-toolchain.toml pins 1.85, and
+      # naming a channel here would silently override that pin.
+      - name: Show toolchain
+        run: |
+          rustc --version
+          cargo --version
+
+      - uses: Swatinem/rust-cache@v2
+
+      # Debug and release differ for us — release carries `debug = true` for
+      # self-profiling, which is exactly the config that would break alone.
+      - name: Build (debug)
+        run: cargo build --all-targets --locked
+
+      - name: Build (release)
+        run: cargo build --release --locked
