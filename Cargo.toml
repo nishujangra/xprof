@@ -2,7 +2,7 @@
 name = "xprof"
 version = "0.0.0"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.87"
 description = "Native XDP profiler for Linux"
 license = "GPL-2.0-or-later"
 readme = "README.md"
@@ -16,6 +16,8 @@ name = "xprof"
 path = "src/main.rs"
 
 [dependencies]
+aya = "0.14"
+aya-obj = "0.3"
 clap = { version = "4.6.5", features = ["derive"] }
 libc = "0.2.189"
 netlink-packet-core = { version = "0.8.1", default-features = false }
