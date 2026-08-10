@@ -2,8 +2,8 @@
 # Pinned rather than "stable" so that a clippy or rustfmt release cannot turn a
 # green CI run red without a commit. Bump deliberately.
 #
-# 1.85 is the floor: edition 2024 requires it. Keep in sync with
-# `rust-version` in Cargo.toml.
-channel = "1.85"
+# 1.87 is the floor: aya 0.14 requires it. Edition 2024 needs only 1.85, so aya
+# is what sets this. Keep in sync with `rust-version` in Cargo.toml.
+channel = "1.87"
 components = ["rustfmt", "clippy"]
 profile = "minimal"
