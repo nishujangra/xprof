@@ -57,6 +57,32 @@ impl ProgInfo {
         self.btf_id.is_some() && self.nr_line_info > 0
     }
 
+    /// Whether the program carries BTF function records.
+    pub fn has_func_info(&self) -> bool {
+        self.btf_id.is_some() && self.nr_func_info > 0
+    }
+
+    /// BTF id for output, or `-` when the program was loaded without BTF.
+    pub fn btf_id_display(&self) -> String {
+        match self.btf_id {
+            Some(id) => id.to_string(),
+            None => "-".to_string(),
+        }
+    }
+
+    /// Function-record count for output, e.g. `4 records`.
+    pub fn func_info_display(&self) -> String {
+        record_count(self.has_func_info(), self.nr_func_info)
+    }
+
+    /// Line-record count for output.
+    ///
+    /// Phase 0 reports presence and count only; decoding the records is
+    /// Phase 1's job.
+    pub fn line_info_display(&self) -> String {
+        record_count(self.has_line_info(), self.nr_line_info)
+    }
+
     /// Program type as it should appear in output.
     ///
     /// The generated enum's `Debug` is the kernel's constant name, which is
@@ -73,6 +99,22 @@ impl ProgInfo {
             bpf_prog_type::BPF_PROG_TYPE_TRACING => "tracing",
             _ => "other",
         }
+    }
+}
+
+/// Render a BTF record count the way `xprof info` prints it.
+///
+/// "unavailable" rather than "0 records": if there is no BTF at all the count is
+/// meaningless, and the user needs to know source-level output is impossible
+/// rather than that some number happened to be zero.
+fn record_count(present: bool, n: u32) -> String {
+    if !present {
+        return "unavailable".to_string();
+    }
+
+    match n {
+        1 => "1 record".to_string(),
+        _ => format!("{n} records"),
     }
 }
 
@@ -178,6 +220,58 @@ mod tests {
     #[test]
     fn xdp_type_renders_for_output() {
         assert_eq!(xdp_prog().type_name(), "XDP");
+    }
+
+    #[test]
+    fn record_counts_render_for_output() {
+        let p = xdp_prog();
+
+        assert_eq!(p.btf_id_display(), "37");
+        assert_eq!(p.func_info_display(), "4 records");
+        assert_eq!(p.line_info_display(), "12 records");
+    }
+
+    #[test]
+    fn one_record_is_singular() {
+        let p = ProgInfo {
+            nr_func_info: 1,
+            ..xdp_prog()
+        };
+
+        assert_eq!(p.func_info_display(), "1 record");
+    }
+
+    /// Without BTF the counts are meaningless, so say so rather than print `0`.
+    #[test]
+    fn no_btf_reports_unavailable_not_zero() {
+        let p = ProgInfo {
+            btf_id: None,
+            nr_func_info: 0,
+            nr_line_info: 0,
+            ..xdp_prog()
+        };
+
+        assert_eq!(p.btf_id_display(), "-");
+        assert_eq!(p.func_info_display(), "unavailable");
+        assert_eq!(p.line_info_display(), "unavailable");
+    }
+
+    /// BTF present but no line records — a real case for programs built without
+    /// debug info.
+    #[test]
+    fn btf_without_line_records_is_unavailable() {
+        let p = ProgInfo {
+            nr_line_info: 0,
+            ..xdp_prog()
+        };
+
+        assert_eq!(p.btf_id_display(), "37", "the BTF id still exists");
+        assert_eq!(p.line_info_display(), "unavailable");
+        assert_eq!(
+            p.func_info_display(),
+            "4 records",
+            "func records unaffected"
+        );
     }
 
     #[test]
