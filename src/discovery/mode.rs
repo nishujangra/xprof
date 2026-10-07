@@ -138,7 +138,10 @@ mod tests {
         let err = ensure_native("eth0", XdpMode::Generic).expect_err("generic must be rejected");
         assert!(matches!(
             err,
-            Error::NotNativeXdp { mode: XdpMode::Generic, .. }
+            Error::NotNativeXdp {
+                mode: XdpMode::Generic,
+                ..
+            }
         ));
     }
 }
