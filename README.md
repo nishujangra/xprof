@@ -35,4 +35,15 @@ xprof does not pre-flight check any of this. It attempts the operation and,
 on `EPERM`/`EACCES`, reports which capability or sysctl is most likely the
 cause.
 
+## Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0`  | Success — including "nothing attached", which is a normal state, not an error |
+| `1`  | User or environment error: no such interface, non-native XDP mode, missing permissions |
+| `2`  | Internal error: xprof hit a bug or an unfinished code path |
+
+A `1` is yours to fix (wrong interface name, wrong host, missing
+capability); a `2` is ours — please file an issue.
+
 GPL-2.0-or-later. See [LICENSE](LICENSE).

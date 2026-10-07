@@ -11,6 +11,10 @@ keywords = ["xdp", "ebpf", "bpf", "profiler", "linux"]
 categories = ["command-line-utilities", "development-tools::profiling"]
 publish = false
 
+[lib]
+name = "xprof"
+path = "src/lib.rs"
+
 [[bin]]
 name = "xprof"
 path = "src/main.rs"
@@ -26,6 +30,8 @@ netlink-sys = { version = "0.8.8", default-features = false }
 thiserror = "2.0.19"
 
 [dev-dependencies]
+assert_cmd = "2.2.2"
+predicates = "3.1.4"
 
 [profile.release]
 # Profiling xprof itself is a stated project requirement, and symbolizing our
