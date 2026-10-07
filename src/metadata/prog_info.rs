@@ -149,6 +149,21 @@ pub fn info_for_id(id: u32) -> Result<ProgInfo> {
     })
 }
 
+/// Fail unless `info` is a `BPF_PROG_TYPE_XDP` program.
+///
+/// A metadata fact: what the program *is*, independent of how it is attached.
+/// Callers decide whether this is fatal; `list` does not want it to be.
+pub fn ensure_xdp(info: &ProgInfo) -> Result<()> {
+    if info.prog_type == bpf_prog_type::BPF_PROG_TYPE_XDP {
+        return Ok(());
+    }
+
+    Err(Error::NotXdpProgType {
+        prog_id: info.id,
+        found: info.type_name().to_string(),
+    })
+}
+
 /// Read `nr_func_info` and `nr_line_info` straight from `bpf_prog_info`.
 ///
 /// aya wraps that struct with a private field and exposes no accessor for these
@@ -272,6 +287,22 @@ mod tests {
             "4 records",
             "func records unaffected"
         );
+    }
+
+    #[test]
+    fn ensure_xdp_accepts_xdp_program() {
+        assert!(ensure_xdp(&xdp_prog()).is_ok());
+    }
+
+    #[test]
+    fn ensure_xdp_rejects_other_types() {
+        let p = ProgInfo {
+            prog_type: bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS,
+            ..xdp_prog()
+        };
+
+        let err = ensure_xdp(&p).expect_err("non-XDP program must be rejected");
+        assert!(matches!(err, Error::NotXdpProgType { prog_id, .. } if prog_id == p.id));
     }
 
     #[test]
