@@ -6,4 +6,5 @@
 //! `metadata` know nothing of tables or JSON, and nothing here reaches back
 //! into either to fetch what it did not receive as arguments.
 
+pub mod json;
 pub mod table;

@@ -12,10 +12,10 @@ use crate::cli::output::OutputFormat;
 use crate::discovery::{link, mode};
 use crate::error::{Error, Result};
 use crate::metadata::prog_info;
-use crate::render::table;
+use crate::render::{json, table};
 
 /// Run `xprof info <iface>`.
-pub fn run(iface: &str, _fmt: OutputFormat) -> Result<()> {
+pub fn run(iface: &str, fmt: OutputFormat) -> Result<()> {
     let links = link::list_links()?;
     let l = links
         .iter()
@@ -33,20 +33,35 @@ pub fn run(iface: &str, _fmt: OutputFormat) -> Result<()> {
     } else {
         "unavailable"
     };
+    let mode_str = attach.mode.to_string();
+    let id_str = info.id.to_string();
+    let btf_id = info.btf_id_display();
+    let func_info = info.func_info_display();
 
-    print!(
-        "{}",
-        table::write_fields(&[
+    let out = match fmt {
+        OutputFormat::Text => table::write_fields(&[
             ("Interface:", iface.to_string()),
-            ("Mode:", attach.mode.to_string()),
+            ("Mode:", mode_str),
             ("Program:", info.name.clone()),
-            ("ID:", info.id.to_string()),
+            ("ID:", id_str),
             ("Type:", info.type_name().to_string()),
-            ("BTF ID:", info.btf_id_display()),
-            ("Func info:", info.func_info_display()),
+            ("BTF ID:", btf_id),
+            ("Func info:", func_info),
             ("Line info:", line_info.to_string()),
-        ])
-    );
+        ]),
+        OutputFormat::Json => json::write_object(&[
+            ("interface", iface),
+            ("mode", &mode_str),
+            ("program", &info.name),
+            ("id", &id_str),
+            ("type", info.type_name()),
+            ("btf_id", &btf_id),
+            ("func_info", &func_info),
+            ("line_info", line_info),
+        ]),
+    };
+
+    print!("{out}");
 
     Ok(())
 }
