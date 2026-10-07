@@ -6,7 +6,6 @@
 //! command has to reach back for the raw flag.
 
 /// Rendering mode for command output.
-#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OutputFormat {
     /// Human-readable text for a terminal.

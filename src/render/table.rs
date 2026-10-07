@@ -36,6 +36,26 @@ pub fn write_table(headers: &[&str], rows: &[Vec<String>]) -> String {
     out
 }
 
+/// Render `fields` as a label/value report, one pair per line.
+///
+/// Labels are padded to the widest label so values line up in a column, the
+/// way `info` presents a single program's metadata. No header, no rule — a
+/// report describes one thing, not a collection of rows.
+pub fn write_fields(fields: &[(&str, String)]) -> String {
+    let label_width = fields
+        .iter()
+        .map(|(label, _)| label.len())
+        .max()
+        .unwrap_or(0);
+
+    let mut out = String::new();
+    for (label, value) in fields {
+        out.push_str(&format!("{label:<label_width$}  {value}\n"));
+    }
+
+    out
+}
+
 fn push_row(out: &mut String, cells: impl Iterator<Item = String>, widths: &[usize]) {
     let padded: Vec<String> = cells
         .enumerate()
@@ -78,5 +98,20 @@ mod tests {
     fn empty_rows_still_print_header() {
         let out = write_table(&["A", "B"], &[]);
         assert_eq!(out.lines().count(), 2, "header plus rule, no data rows");
+    }
+
+    #[test]
+    fn fields_align_values_to_widest_label() {
+        let out = write_fields(&[
+            ("Mode:", "native".to_string()),
+            ("Interface:", "eth0".to_string()),
+        ]);
+        let lines: Vec<&str> = out.lines().collect();
+
+        assert_eq!(lines.len(), 2, "one line per field, no header or rule");
+        // "Interface:" is the widest label, so both values start at the same column.
+        let mode_value_at = lines[0].find("native").unwrap();
+        let iface_value_at = lines[1].find("eth0").unwrap();
+        assert_eq!(mode_value_at, iface_value_at);
     }
 }

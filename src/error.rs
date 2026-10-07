@@ -35,6 +35,7 @@ pub enum Error {
     /// The program is attached, but in generic (SKB) or offload mode.
     #[error(
         "xprof currently supports native XDP only.\n\n\
+         Interface:\n  {iface}\n\n\
          Detected mode:\n  {mode}\n\n\
          Native XDP is required."
     )]
@@ -61,5 +62,15 @@ mod tests {
         };
 
         assert!(err.to_string().contains("generic"), "{err}");
+    }
+
+    #[test]
+    fn not_native_names_the_interface() {
+        let err = Error::NotNativeXdp {
+            iface: "eth0".to_string(),
+            mode: XdpMode::Offload,
+        };
+
+        assert!(err.to_string().contains("eth0"), "{err}");
     }
 }

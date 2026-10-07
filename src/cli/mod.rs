@@ -11,7 +11,7 @@ pub mod output;
 
 use clap::{Parser, Subcommand};
 
-use crate::error::{Error, Result};
+use crate::error::Result;
 use output::OutputFormat;
 
 /// Native XDP profiler for Linux.
@@ -48,6 +48,6 @@ pub fn dispatch(cli: Cli) -> Result<()> {
 
     match cli.command {
         Command::List => commands::list::run(format),
-        Command::Info { iface: _ } => Err(Error::NotImplemented("info")),
+        Command::Info { iface } => commands::info::run(&iface, format),
     }
 }
