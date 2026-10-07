@@ -65,3 +65,28 @@ pub fn run(iface: &str, fmt: OutputFormat) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A name no real interface will ever have, so this is not
+    /// environment-dependent.
+    const MISSING_IFACE: &str = "xprof-test-missing-iface";
+
+    #[test]
+    fn missing_interface_is_distinct_from_unattached() {
+        let missing = run(MISSING_IFACE, OutputFormat::Text).unwrap_err();
+        assert!(
+            matches!(missing, Error::InterfaceNotFound(_)),
+            "a name with no matching link must report InterfaceNotFound, not NoXdpProgram: {missing}"
+        );
+
+        // `lo` always exists but never carries an XDP program.
+        let unattached = run("lo", OutputFormat::Text).unwrap_err();
+        assert!(
+            matches!(unattached, Error::NoXdpProgram(_)),
+            "an existing interface with nothing attached must report NoXdpProgram, not InterfaceNotFound: {unattached}"
+        );
+    }
+}
