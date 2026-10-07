@@ -5,6 +5,7 @@
 //! This can be used in any functional code so that nothings is ever written against `unwrap()`
 
 use crate::discovery::XdpMode;
+use crate::perms;
 
 /// Convenience alias so callers write `Result<T>` rather than repeating the
 /// error type.
@@ -21,7 +22,7 @@ pub enum Error {
     #[error("bpf error: {0}")]
     Bpf(String),
 
-    #[error("permission denied: {hint}")]
+    #[error("permission denied {hint}")]
     PermissionDenied { hint: String },
 
     /// No interface by that name exists on this host.
@@ -50,6 +51,25 @@ pub enum Error {
     NotXdpProgType { prog_id: u32, found: String },
 }
 
+impl Error {
+    /// Build a [`Error::PermissionDenied`] for an operation that just failed
+    /// with `EPERM`/`EACCES`.
+    ///
+    /// `operation` says what xprof was trying to do ("reading BPF program
+    /// info"); [`perms::diagnose`] is appended underneath to say why it
+    /// probably failed on this host. Diagnosis never replaces the operation
+    /// description — a wrong or unavailable diagnosis still leaves the user
+    /// knowing which call failed.
+    pub fn permission_denied(operation: &str) -> Error {
+        let hint = match perms::diagnose() {
+            Some(diagnosis) => format!("{operation}.\n\n{diagnosis}"),
+            None => format!("{operation}."),
+        };
+
+        Error::PermissionDenied { hint }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -72,5 +92,14 @@ mod tests {
         };
 
         assert!(err.to_string().contains("eth0"), "{err}");
+    }
+
+    #[test]
+    fn permission_denied_names_the_operation() {
+        let err = Error::permission_denied("reading BPF program info");
+        assert!(
+            err.to_string().contains("reading BPF program info"),
+            "{err}"
+        );
     }
 }

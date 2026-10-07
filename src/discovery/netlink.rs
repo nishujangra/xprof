@@ -139,9 +139,7 @@ fn error_from_kernel(err: netlink_packet_core::ErrorMessage) -> Error {
     let errno = err.code.map(|c| c.get().unsigned_abs()).unwrap_or(0);
 
     match errno as i32 {
-        libc::EPERM | libc::EACCES => Error::PermissionDenied {
-            hint: "reading the interface list requires CAP_NET_ADMIN or root".to_string(),
-        },
+        libc::EPERM | libc::EACCES => Error::permission_denied("reading the interface list"),
         _ => Error::Netlink(format!("kernel returned error: {err:?}")),
     }
 }
