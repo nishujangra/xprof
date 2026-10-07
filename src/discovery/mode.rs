@@ -23,7 +23,7 @@
 use netlink_packet_route::link::LinkXdp;
 
 use super::link::Link;
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 /// Where an attached XDP program runs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -102,6 +102,21 @@ pub fn detect(link: &Link) -> Result<Option<XdpAttach>> {
     Ok(attach)
 }
 
+/// Fail unless `mode` is [`XdpMode::Native`].
+///
+/// A discovery fact: how the program is attached, independent of what it is.
+/// Callers decide whether this is fatal; `list` does not want it to be.
+pub fn ensure_native(iface: &str, mode: XdpMode) -> Result<()> {
+    if mode == XdpMode::Native {
+        return Ok(());
+    }
+
+    Err(Error::NotNativeXdp {
+        iface: iface.to_string(),
+        mode,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -111,5 +126,19 @@ mod tests {
         assert_eq!(XdpMode::Native.to_string(), "native");
         assert_eq!(XdpMode::Generic.to_string(), "generic");
         assert_eq!(XdpMode::Offload.to_string(), "offload");
+    }
+
+    #[test]
+    fn ensure_native_accepts_native_mode() {
+        assert!(ensure_native("eth0", XdpMode::Native).is_ok());
+    }
+
+    #[test]
+    fn ensure_native_rejects_other_modes() {
+        let err = ensure_native("eth0", XdpMode::Generic).expect_err("generic must be rejected");
+        assert!(matches!(
+            err,
+            Error::NotNativeXdp { mode: XdpMode::Generic, .. }
+        ));
     }
 }
