@@ -202,9 +202,9 @@ fn btf_record_counts(info: &ProgramInfo) -> Result<(u32, u32)> {
     if ret < 0 {
         let errno = std::io::Error::last_os_error();
         return Err(match errno.raw_os_error() {
-            Some(libc::EPERM) | Some(libc::EACCES) => Error::PermissionDenied {
-                hint: "reading BPF program info requires CAP_BPF or root".to_string(),
-            },
+            Some(libc::EPERM) | Some(libc::EACCES) => {
+                Error::permission_denied("reading BPF program info")
+            }
             _ => Error::Bpf(format!(
                 "BPF_OBJ_GET_INFO_BY_FD failed for program {}: {errno}",
                 info.id()

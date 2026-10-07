@@ -13,9 +13,6 @@
 //! defaults change) and produces false refusals on systems that would
 //! otherwise have worked. Attempt first, explain on failure.
 
-// Built ahead of its first caller. Remove once `error.rs` calls `diagnose`.
-#![allow(dead_code)]
-
 use std::fs;
 
 /// Bit position of `CAP_PERFMON` in the kernel's capability bitmask.
