@@ -10,7 +10,7 @@ use xprof::error::Result;
 fn main() {
     if let Err(e) = run() {
         eprintln!("ERROR: {e}");
-        std::process::exit(1);
+        std::process::exit(e.exit_code());
     }
 }
 

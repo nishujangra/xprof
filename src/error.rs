@@ -68,6 +68,28 @@ impl Error {
 
         Error::PermissionDenied { hint }
     }
+
+    /// Process exit code for this error.
+    ///
+    /// `0` is reserved for success and is never returned here — only
+    /// [`crate::cli::dispatch`] returning `Ok` produces it. The remaining two
+    /// codes split on who is responsible for the failure: `1` when the user
+    /// or the host environment caused it (wrong interface, wrong mode,
+    /// missing permissions) and `2` when xprof itself hit a bug or a gap —
+    /// a malformed netlink exchange, an unexpected `bpf()` failure, or a
+    /// subcommand that parses but has no implementation yet. The user can
+    /// fix a `1`; a `2` is ours to fix.
+    pub fn exit_code(&self) -> i32 {
+        match self {
+            Error::PermissionDenied { .. }
+            | Error::InterfaceNotFound(_)
+            | Error::NoXdpProgram(_)
+            | Error::NotNativeXdp { .. }
+            | Error::NotXdpProgType { .. } => 1,
+
+            Error::Netlink(_) | Error::Bpf(_) | Error::NotImplemented(_) => 2,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -101,5 +123,38 @@ mod tests {
             err.to_string().contains("reading BPF program info"),
             "{err}"
         );
+    }
+
+    #[test]
+    fn user_facing_errors_exit_one() {
+        assert_eq!(Error::InterfaceNotFound("eth0".to_string()).exit_code(), 1);
+        assert_eq!(Error::NoXdpProgram("eth0".to_string()).exit_code(), 1);
+        assert_eq!(
+            Error::permission_denied("reading BPF program info").exit_code(),
+            1
+        );
+        assert_eq!(
+            Error::NotNativeXdp {
+                iface: "eth0".to_string(),
+                mode: XdpMode::Generic,
+            }
+            .exit_code(),
+            1
+        );
+        assert_eq!(
+            Error::NotXdpProgType {
+                prog_id: 1,
+                found: "tracing".to_string(),
+            }
+            .exit_code(),
+            1
+        );
+    }
+
+    #[test]
+    fn internal_errors_exit_two() {
+        assert_eq!(Error::Netlink("boom".to_string()).exit_code(), 2);
+        assert_eq!(Error::Bpf("boom".to_string()).exit_code(), 2);
+        assert_eq!(Error::NotImplemented("top").exit_code(), 2);
     }
 }
