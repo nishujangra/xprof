@@ -2,4 +2,5 @@
 
 //! One module per subcommand.
 
+pub mod info;
 pub mod list;
