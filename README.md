@@ -2,13 +2,87 @@
 
 **Native XDP profiler for Linux**
 
-⚠️ **Experimental — nothing works yet.**
+⚠️ **Experimental — Phase 0 (discovery) only. No sampling yet.**
 
 Samples where CPU time goes inside a native-mode XDP program — down to BPF
 functions and instructions. Native XDP only, by design.
 
 ```bash
 cargo build
+```
+
+## Phase 0 — XDP discovery
+
+Pure read-only introspection: what's attached, where, and what it is. No
+perf events, no sampling, no BPF program of our own loaded.
+
+- [x] `xprof list` lists every interface with an XDP program attached
+- [x] each row shows: interface, mode (native/generic/offload), program
+      name, program ID
+- [ ] `xprof info eth0` prints prog id, name, type, load time, BTF id
+      presence — load time is tracked internally (`ProgInfo.load_time`)
+      but not yet surfaced in output
+- [x] non-XDP program types are rejected with a clear error
+- [x] generic-mode XDP is reported, not silently profiled
+- [x] missing CAP_BPF / permissions produce an actionable error, not a
+      panic
+- [x] runs on a machine with zero XDP programs attached without erroring
+
+### Usage
+
+On a host with nothing attached:
+
+```console
+$ xprof list
+No XDP programs attached.
+
+$ xprof info lo
+ERROR: no XDP program attached to lo
+$ echo $?
+1
+
+$ xprof info doesnotexist
+ERROR: interface not found: doesnotexist
+$ echo $?
+1
+```
+
+With a native XDP program attached (see
+[docs/testing.md](docs/testing.md) for how to set one up with a `veth`
+pair):
+
+```console
+$ xprof list
+Interface   Mode      Program       ID
+------------------------------------------------
+eth0        native    xdp_cidr      142
+
+$ xprof info eth0
+Interface:    eth0
+Mode:         native
+Program:      xdp_cidr
+ID:           142
+Type:         XDP
+BTF ID:       37
+Func info:    4 records
+Line info:    available
+```
+
+A generic-mode attach is listed but rejected by `info`:
+
+```console
+$ xprof info eth1
+ERROR: xprof currently supports native XDP only.
+
+Interface:
+  eth1
+
+Detected mode:
+  generic
+
+Native XDP is required.
+$ echo $?
+1
 ```
 
 ## Privileges

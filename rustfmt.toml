@@ -1,0 +1,3 @@
+# Mostly defaults. Present mainly to pin `edition` so rustfmt parses the
+# crate's actual syntax (2024) rather than guessing from context.
+edition = "2024"
