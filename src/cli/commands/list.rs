@@ -34,6 +34,13 @@ pub fn run(_fmt: crate::cli::output::OutputFormat) -> Result<()> {
         })
         .collect();
 
+    if rows.is_empty() {
+        // Not an error: a host with no XDP programs attached is an entirely
+        // normal state, and `list` exits 0 for it.
+        println!("No XDP programs attached.");
+        return Ok(());
+    }
+
     print!(
         "{}",
         table::write_table(&["Interface", "Mode", "Program", "ID"], &rows)
