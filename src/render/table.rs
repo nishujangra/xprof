@@ -39,7 +39,12 @@ pub fn write_table(headers: &[&str], rows: &[Vec<String>]) -> String {
 fn push_row(out: &mut String, cells: impl Iterator<Item = String>, widths: &[usize]) {
     let padded: Vec<String> = cells
         .enumerate()
-        .map(|(i, cell)| format!("{cell:<width$}", width = widths.get(i).copied().unwrap_or(0)))
+        .map(|(i, cell)| {
+            format!(
+                "{cell:<width$}",
+                width = widths.get(i).copied().unwrap_or(0)
+            )
+        })
         .collect();
 
     out.push_str(padded.join("  ").trim_end());
