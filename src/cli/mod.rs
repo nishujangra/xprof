@@ -44,10 +44,10 @@ pub enum Command {
 
 /// Run the parsed command.
 pub fn dispatch(cli: Cli) -> Result<()> {
-    let _format = OutputFormat::from_json_flag(cli.json);
+    let format = OutputFormat::from_json_flag(cli.json);
 
     match cli.command {
-        Command::List => Err(Error::NotImplemented("list")),
+        Command::List => commands::list::run(format),
         Command::Info { iface: _ } => Err(Error::NotImplemented("info")),
     }
 }

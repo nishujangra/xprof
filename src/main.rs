@@ -6,6 +6,7 @@ mod cli;
 mod discovery;
 mod error;
 mod metadata;
+mod render;
 
 use clap::Parser;
 
