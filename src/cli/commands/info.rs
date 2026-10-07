@@ -12,6 +12,7 @@ use crate::cli::output::OutputFormat;
 use crate::discovery::{link, mode};
 use crate::error::{Error, Result};
 use crate::metadata::prog_info;
+use crate::render::table;
 
 /// Run `xprof info <iface>`.
 pub fn run(iface: &str, _fmt: OutputFormat) -> Result<()> {
@@ -27,20 +28,24 @@ pub fn run(iface: &str, _fmt: OutputFormat) -> Result<()> {
     let info = prog_info::info_for_id(attach.prog_id)?;
     prog_info::ensure_xdp(&info)?;
 
-    println!("Interface:    {iface}");
-    println!("Mode:         {}", attach.mode);
-    println!("Program:      {}", info.name);
-    println!("ID:           {}", info.id);
-    println!("Type:         {}", info.type_name());
-    println!("BTF ID:       {}", info.btf_id_display());
-    println!("Func info:    {}", info.func_info_display());
-    println!(
-        "Line info:    {}",
-        if info.has_line_info() {
-            "available"
-        } else {
-            "unavailable"
-        }
+    let line_info = if info.has_line_info() {
+        "available"
+    } else {
+        "unavailable"
+    };
+
+    print!(
+        "{}",
+        table::write_fields(&[
+            ("Interface:", iface.to_string()),
+            ("Mode:", attach.mode.to_string()),
+            ("Program:", info.name.clone()),
+            ("ID:", info.id.to_string()),
+            ("Type:", info.type_name().to_string()),
+            ("BTF ID:", info.btf_id_display()),
+            ("Func info:", info.func_info_display()),
+            ("Line info:", line_info.to_string()),
+        ])
     );
 
     Ok(())
