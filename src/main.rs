@@ -2,16 +2,10 @@
 
 //! xprof — native XDP profiler for Linux.
 
-mod cli;
-mod discovery;
-mod error;
-mod metadata;
-mod perms;
-mod render;
-
 use clap::Parser;
 
-use error::Result;
+use xprof::cli;
+use xprof::error::Result;
 
 fn main() {
     if let Err(e) = run() {

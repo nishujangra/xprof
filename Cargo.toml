@@ -11,6 +11,10 @@ keywords = ["xdp", "ebpf", "bpf", "profiler", "linux"]
 categories = ["command-line-utilities", "development-tools::profiling"]
 publish = false
 
+[lib]
+name = "xprof"
+path = "src/lib.rs"
+
 [[bin]]
 name = "xprof"
 path = "src/main.rs"
